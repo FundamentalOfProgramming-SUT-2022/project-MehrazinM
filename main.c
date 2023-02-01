@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <stdbool.h>
 
+
 //symbols and etc
 #define MAX_COMMAND_SIZE 1000
 #define MAX_FILE_NAME 1000
@@ -60,7 +61,17 @@ void CutstrB(int Size,char* path,int Line,int Place);
 
 void PasteStr(char* command);
 
+//void treeInp(char* command);
+//void listFilesRecursively(char *basePath,int depth);
 
+void AutoIndentInp(char* command);
+void AutoIndent(char* path);
+
+void InpTree(char* command);
+void DirTree(char *basePath, const int root,int depth);
+
+void CompareInp(char* command);
+void CompareFiles(char* path1,char* path2);
 
 //void InputThePath(char* path);
 int main(int argc, const char * argv[]) {
@@ -99,9 +110,19 @@ int main(int argc, const char * argv[]) {
             case 6:
                 CutStrInp(command);
                 break;
-           // case 7:
-               //PasteStr(command);
-                
+            case 7:
+                PasteStr(command);
+                break;
+            case 8:
+                AutoIndentInp(command);
+                break;
+            case 9:
+                InpTree(command);
+                break;
+            case 10:
+                CompareInp(command);
+                break;
+            
                 
         }
         
@@ -136,7 +157,15 @@ int WhatIsTheCommand(char* command){
     else if(strcmp(command,"pastestr")==0){
         return 7;
     }
-    
+    else if(strcmp(command,"auto-indent")==0){
+        return 8;
+    }
+    else if(strcmp(command,"tree")==0){
+        return 9;
+    }
+    else if(strcmp(command,"compare")==0){
+        return 10;
+    }
     
    else{
        return -1;
@@ -319,7 +348,8 @@ void ReadFromFile(char path[]) {
     }
     char c;
     while((c = fgetc(myfile)) != EOF) {
-        printf("%c", c);
+       printf("%c", c);
+    
     }
     printf("\n");
     fclose(myfile);
@@ -531,7 +561,7 @@ int CheckValidDir(char* path){
 int Insertstr(char* command){
 
     char TagForCommand[MAX_COMMAND_SIZE];char TagForCommand1[MAX_COMMAND_SIZE];char TagForCommand2[MAX_COMMAND_SIZE];
-    char sp;int val1,val2=1,val3;  char word[100000];
+    char sp;int val1,val2=1;
     scanf("%s%c",TagForCommand,&sp);
     if(strcmp(TagForCommand, "--file"))
         return 0;
@@ -832,7 +862,7 @@ void RemovestrF(int Size,char* path,int Line,int Place){
     
 }
 void RemovestrB(int Size,char* path,int Line,int Place){
-    unsigned long charofLine[Line];int i=0;
+   ;int i=0;
     int lineLen[MAX_STR_SIZE];char content[MAX_STR_SIZE];
 
     if (Size<=Place+1){
@@ -854,7 +884,7 @@ void RemovestrB(int Size,char* path,int Line,int Place){
         }
     fclose(OrgFile);
 
-    int sum = 0;
+  
     int t,s1=Size;
     int s2=Size-(Place+1);
     for( t=Line-1;t>0;t--){
@@ -919,9 +949,11 @@ void CopyStrInp(char* command){
         printf("There must be an error in the inputs\n");
         return;
     }
+    
     int val=IsValidPath(filepath, Copyfilepath);
-    printf("%s",Copyfilepath);
-    if(val==0){
+  
+     printf("%s...",filepath);
+    if(val!=0){
         return;
     }
     if(!strcmp("-f", Mode)){
@@ -970,7 +1002,7 @@ void CopystrF(int size,char* path,int Line,int Place){
     return;
 }
 void CopystrB(int Size,char* path,int Line,int Place){
-    unsigned long charofLine[Line];int i=0;
+    int i=0;
     int lineLen[MAX_STR_SIZE];char content[MAX_STR_SIZE];
 
     if (Size<=Place+1){
@@ -1231,18 +1263,152 @@ void PasteStr(char* command){
        fclose(clipboard);
 
 }
-void InputFind(char* command){
-    char StrTag[MAX_COMMAND_SIZE];
-    char FileTag[MAX_COMMAND_SIZE];
-    char opt[MAX_COMMAND_SIZE];
+void InpTree(char* command){
+    int depth;
+    scanf("%d",&depth);
+    if(depth<-1){
+        printf("Invalid\n");
+        return;
+    }
+    char path[]="root/";
+    DirTree(path, 0,depth);
+
+    
+}
+void DirTree(char *basePath, const int root,int depth)
+{
+    
+    int i;
+    char path[1000];
+    struct dirent *dp;
+    DIR *dir = opendir(basePath);
+
+    if (!dir)
+        return;
+    if(depth==0)
+        return;
+
+    while ((dp = readdir(dir)) != NULL)
+    {
+        if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
+        {
+            for (i=0; i<root; i++)
+            {
+                if (i%2 == 0 || i == 0){
+                    
+                    printf("%s", "│");
+                }
+                else
+                    printf(" ");
+
+            }
+            
+
+            printf("%s%s\n","├─", dp->d_name);
+
+            strcpy(path, basePath);
+            strcat(path, "/");
+            strcat(path, dp->d_name);
+            DirTree(path, root + 2,depth-1);
+        }
+    }
+
+    closedir(dir);
+}
+
+
+
+//void InputFind(char* command,int *ATptr,int *){
+//    char StrTag[MAX_COMMAND_SIZE];
+//    char FileTag[MAX_COMMAND_SIZE];
+//    char opt[MAX_COMMAND_SIZE];
+//    char filepath[MAX_PATH_SIZE];char Copyfilepath[MAX_PATH_SIZE];
+//    char str[MAX_STR_SIZE];
+//    int Place,Line;char sp;
+//    int all,byword,at,count;
+//    int filecmd,strcmd;
+//    scanf("%s",FileTag);
+//    filecmd=strcmp("--file", FileTag);
+//    char c;
+//    c = getchar();
+//    if (c != '\"')
+//    {
+//        filepath[0] = c;
+//        scanf("%s", filepath + 1);
+//    }
+//    else
+//    {
+//        int i = 1;
+//        filepath[0]='"';
+//         while (1)
+//         {
+//             c = getchar();
+//             if (c == '\"' && filepath[i - 1] != '\\'){
+//                 filepath[i]=c;
+//                  break;
+//
+//             }
+//            filepath[i] = c;
+//            i++;
+//        }
+//        filepath[i] = 0;
+//    }
+//    int val=IsValidPath(filepath, Copyfilepath);
+//    scanf("%s",StrTag);
+//    InputStr(str);
+//    if (getchar() != '\n')
+//    {
+//        char att[30];
+//        int count, all, byword, at;
+//        count = all = byword = at = 0;
+//        do
+//        {
+//            scanf("%s", att);
+//            if (!strcmp(att, "-at"))
+//            {
+//                at = 1;
+//                scanf("%d",ATptr);
+//            }
+//            else if (!strcmp(att, "-count"))
+//            {
+//                count = 1;
+//            }
+//            else if (!strcmp(att, "-all"))
+//            {
+//                all = 1;
+//            }
+//            else if (!strcmp(att, "-byword"))
+//            {
+//                byword++;
+//            }
+//        } while (getchar() != '\n');
+//    }
+//
+//
+//
+//
+//
+//}
+
+
+//void SimpleFind(char* str,char* path){
+//
+//
+//
+//
+//
+//}
+void AutoIndentInp(char* command){
+    
+  
+    char sp;int val1,val2=1;
+   
     char filepath[MAX_PATH_SIZE];char Copyfilepath[MAX_PATH_SIZE];
-    char str[MAX_STR_SIZE];
-    int Place,Line;char sp;
-    int all,byword,at,count;
-    int filecmd,strcmd;
-    scanf("%s",FileTag);
-    filecmd=strcmp("--file", FileTag);
+ 
+    
     char c;
+    c = getchar();
+
     c = getchar();
     if (c != '\"')
     {
@@ -1266,12 +1432,273 @@ void InputFind(char* command){
         }
         filepath[i] = 0;
     }
-    int val=IsValidPath(filepath, Copyfilepath);
-    scanf("%s",StrTag);
-    InputStr(str);
-    
-    
 
-   
+    val1=IsValidPath(filepath, Copyfilepath);
+    if (val1!=1)
+        return;
+
+    AutoIndent(Copyfilepath);
+    return;
+}
+//void PrepFileForIndent(char* path){
+//
+//}
+void AutoIndent(char* path){
+    char ContentOfLine[MAX_STR_SIZE];
+    FILE* TempFile=fopen("temp2.txt", "w");
+    FILE* OrgFile=fopen(path, "r");
+    int op=0,num=0;
+    char c,prev_c;
+    while (1){
+        prev_c=c;
+        c=fgetc(OrgFile);
+      //  printf("%c",c);
+        if(c=='{'){
+//            for(int i=0;i<op;i++){
+//                fprintf(TempFile, "%c",' ');
+//            }
+//            op++;
+//            fprintf(TempFile, "%c",c);
+//            fprintf(TempFile, "%c",'\n');
+//            c='\n';
+            if(prev_c==' '){
+                
+                 fprintf(TempFile, "%c",c);
+                 fprintf(TempFile, "%c",'\n');
+                 for(int i=0;i<op;i++){
+                   fprintf(TempFile, "%s","    ");
+                 }
+                 
+                // c='\n';
+            }
+            else{
+                fprintf(TempFile, "%c",' ');
+                fprintf(TempFile, "%c",c);
+                fprintf(TempFile, "%c",'\n');
+                for(int i=0;i<op;i++){
+                  fprintf(TempFile, "%s","    ");
+                }
+            }
+            op++;
+
+
+        }
+        else if(c=='}'){
+            fprintf(TempFile, "%c",'\n');
+            for(int i=op-1;i>0;i--){
+                fprintf(TempFile, "%c",' ');
+            }
+            
+            fprintf(TempFile, "%c",c);
+            fprintf(TempFile, "%c",'\n');
+            op--;
+
+
+        }
+        else if(c==EOF){
+            break;
+        }
+        else{
+            if(prev_c=='\n'){
+                for(int i=0;i<op;i++){
+                  fprintf(TempFile, "%s","    ");
+                }
+                fprintf(TempFile, "%c",c);
+
+            }
+            else{
+                fprintf(TempFile, "%c",c);
+
+            }
+        }
+        
+        
+    }
+    fclose(TempFile);
+    fclose(OrgFile);
+    
+  
+    OrgFile=fopen(path, "w");
+    TempFile=fopen("temp2.txt", "r");
+    while(1){
+        c=fgetc(TempFile);
+        if(c==EOF){
+            break;
+        }
+
+        fprintf( OrgFile,"%c",c);
+
+    }
+//    while((fgets(ContentOfLine, 2000, TempFile))!=NULL){
+//        fprintf( OrgFile,"%s",ContentOfLine);
+//    }
+
+    fclose(OrgFile);
+    fclose(TempFile);
+    remove("temp2.txt");
 }
 
+void CompareInp(char* command){
+    char sp;int val1,val2;
+   
+    char filepath1[MAX_PATH_SIZE];char Copyfilepath1[MAX_PATH_SIZE];
+    char filepath2[MAX_PATH_SIZE];char Copyfilepath2[MAX_PATH_SIZE];
+
+ 
+    
+    char c;
+    c = getchar();
+
+    c = getchar();
+    if (c != '\"')
+    {
+        filepath1[0] = c;
+        scanf("%s", filepath1 + 1);
+    }
+    else
+    {
+        int i = 1;
+        filepath1[0]='"';
+         while (1)
+         {
+             c = getchar();
+             if (c == '\"' && filepath1[i - 1] != '\\'){
+                 filepath1[i]=c;
+                  break;
+
+             }
+             printf("%c",c);
+            filepath1[i] = c;
+            i++;
+        }
+        filepath1[i] = '\0';
+    }
+
+    val1=IsValidPath(filepath1, Copyfilepath1);
+    getchar();
+    gets(filepath2);
+    val2=IsValidPath(filepath2, Copyfilepath2);
+  
+
+//    c = getchar();
+//    if (c != '\"')
+//    {
+//        filepath2[0] = c;
+//        scanf("%s", filepath2 + 1);
+//    }
+//    else
+//    {
+//        int i = 1;
+//        filepath2[0]='"';
+//         while (1)
+//         {
+//             c = getchar();
+//             if (c == '\"' && filepath2[i - 1] != '\\'){
+//                 filepath1[i]=c;
+//                  break;
+//
+//             }
+//            filepath2[i] = c;
+//            i++;
+//        }
+//        filepath2[i] = 0;
+//    }
+  // printf("%c",330);
+   
+    //prinf("%s %s\n",Copyfilepath1,Copyfilepath2);
+  //  val2=IsValidPath(filepath2, Copyfilepath2);
+    printf("%s %s\n",Copyfilepath1,Copyfilepath2);
+    if (val1!=1||val2!=1){
+        printf("%d %d\n",val1,val2);
+
+        return;
+    }
+    
+    CompareFiles(Copyfilepath1, Copyfilepath2);
+    
+}
+void CompareFiles(char* path1,char* path2){
+    FILE* file1=fopen(path1, "r");
+    FILE* file2=fopen(path2, "r");
+    int endf1=0,endf2=0;int line=1;
+    char Cont1[MAX_STR_SIZE],Cont2[MAX_STR_SIZE];
+
+    while(1){
+        if (fgets(Cont1, 2000, file1) == NULL){
+            endf1 = 1;
+            
+        }
+        if (fgets(Cont2, 2000, file2) == NULL){
+            endf2 = 1;
+        }
+        if (endf1 || endf2){
+            break;
+        }
+        if (Cont1[strlen(Cont1) - 1] == '\n'){
+            Cont1[strlen(Cont1) - 1] = 0;
+        }
+        if (Cont2[strlen(Cont2) - 1] == '\n'){
+            Cont2[strlen(Cont2) - 1] = 0;
+            
+        }
+        if(strcmp(Cont1,Cont2)){
+            printf("============ #%d ============\n", line);
+            printf("%s\n",Cont1);
+            printf("%s\n",Cont2);
+        }
+        line++;
+    }
+    if(endf1&&endf2)
+        return;
+    int start=line;int end=line;
+  
+    if(!endf1&&endf2){
+        
+        while(fgets(Cont1, 2000, file1) != NULL){
+            end++;
+           
+        }
+     
+        printf("<<<<<<<<<<<< #%d - #%d <<<<<<<<<<<<\n", start, end);
+        fclose(file1);
+        file1=fopen(path1, "r");
+        int i=1;
+
+        while(fgets(Cont1, 2000, file1)!= NULL){
+           // printf("%d",i);
+            if(i>=start){
+                printf("%s\n",Cont1);
+            }
+            i++;
+        }
+        fclose(file1);
+        return;
+    }
+    if(endf1&&!endf2){
+        
+
+        while(fgets(Cont2, 2000, file2) != NULL){
+            end++;
+            
+        }
+        fclose(file2);
+        file2=fopen(path2, "r");
+        int i=1;
+
+        while(fgets(Cont2, 2000, file2)!= NULL){
+          //  printf("%d",i);
+
+            if(i>=start){
+                printf("%s\n",Cont2);
+            }
+            i++;
+        }
+        fclose(file2);
+        return;
+    }
+       
+
+    
+    
+    return;
+}
