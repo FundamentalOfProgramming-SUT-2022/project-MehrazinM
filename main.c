@@ -47,6 +47,9 @@ void InputStr(char* str);
 void PrepareStr(char* str,char* NewStr);
 void WriteWPos(int line,int place,char* path,char* str);
 
+int InputForRmWOq(char* path,char* Copyfilepath);
+int InputRmWq(char* path,char* Copyfilepath);
+
 void RemoveStrCommands(char* command);
 void RemovestrF(int Size,char* path,int Line,int Place);
 void RemovestrB(int Size,char* path,int Line,int Place);
@@ -735,8 +738,15 @@ void WriteWPos(int line,int place,char* path,char* str){
         fprintf(TempFile, "%c",CharContent);
     }
  //   printf("%s",ContentOfLine);
-  //  strcat(ContentOfLine,str);
-    fputs(str, TempFile);
+    strcat(str,ContentOfLine);
+    fprintf(TempFile, "%s",str);
+//    while (1)
+//     {
+//         CharContent=fgetc(OrgFile);
+//         if(CharContent==EOF||CharContent=='\n')
+//             break;
+//         fprintf(TempFile, "%c",CharContent);
+//     }
     while (fgets(ContentOfLine, 2000, OrgFile) != NULL)
      {
          fprintf( TempFile,"%s",ContentOfLine);
@@ -753,7 +763,7 @@ void WriteWPos(int line,int place,char* path,char* str){
     fclose(OrgFile);
     fclose(TempFile);
     
-   remove("root/temp.txt");
+    remove("root/temp.txt");
 }
 
 void RemoveStrCommands(char* command){
@@ -763,6 +773,7 @@ void RemoveStrCommands(char* command){
     char SizeTag[MAX_COMMAND_SIZE];
     char filepath[MAX_PATH_SIZE];char Copyfilepath[MAX_PATH_SIZE];
     int Place,Line,size;char sp;
+    int IsQuot=0;
 
     //It must scan
     scanf("%s%c",FileTag,&sp);
@@ -776,6 +787,7 @@ void RemoveStrCommands(char* command){
     }
     else
     {
+        IsQuot=1;
         int i = 1;
         filepath[0]='"';
          while (1)
@@ -789,8 +801,9 @@ void RemoveStrCommands(char* command){
             filepath[i] = c;
             i++;
         }
-        filepath[i] = 0;
+     //   filepath[i] = 0;
     }
+  //  printf("%s",filepath);
     scanf("%s%c",PosTag,&sp);
   //  printf("%s",PosTag);
     scanf("%d:%d ",&Line,&Place);
@@ -805,12 +818,20 @@ void RemoveStrCommands(char* command){
         printf("There must be an error in the inputs\n");
         return;
     }
-    int val=IsValidPath(filepath, Copyfilepath);
+//    int val=IsValidPath(filepath, Copyfilepath);
+    int val;
+    if(IsQuot){
+        val=InputRmWq(filepath,Copyfilepath);
+    }
+    else{
+        val=InputForRmWOq(filepath,Copyfilepath);
+    }
+    
     if(val==0){
         return;
     }
     if(!strcmp("-f", Mode)){
-        RemovestrF(size, Copyfilepath, Line, Place);
+        RemovestrF(size,Copyfilepath ,Line, Place);
         
     }
     else{
@@ -823,10 +844,11 @@ void RemoveStrCommands(char* command){
 }
 void RemovestrF(int Size,char* path,int Line,int Place){
     //we assume the position is valid
-    FILE* TempFile=fopen("root/temp.txt", "w");
-    FILE* OrgFile=fopen(path,"r");
     char ContentOfLine[MAX_STR_SIZE];char CharContent = '\0';
     int i=0;
+    FILE* TempFile=fopen("root/temp.txt", "w");
+    FILE* OrgFile=fopen(path,"r");
+    
     while((fgets(ContentOfLine, 2000, OrgFile))!=NULL&&i<Line-1){
         fprintf( TempFile,"%s", ContentOfLine);
         i++;
@@ -906,7 +928,7 @@ void CopyStrInp(char* command){
     char Mode[100];
     char SizeTag[MAX_COMMAND_SIZE];
     char filepath[MAX_PATH_SIZE];char Copyfilepath[MAX_PATH_SIZE];
-    int Place,Line,size;char sp;
+    int Place,Line,size;char sp;int IsQuot=0;
 
     //It must scan
     scanf("%s%c",FileTag,&sp);
@@ -919,7 +941,7 @@ void CopyStrInp(char* command){
         scanf("%s", filepath + 1);
     }
     else
-    {
+    {   IsQuot=1;
         int i = 1;
         filepath[0]='"';
          while (1)
@@ -950,14 +972,19 @@ void CopyStrInp(char* command){
         return;
     }
     
-    int val=IsValidPath(filepath, Copyfilepath);
-  
-     printf("%s...",filepath);
-    if(val!=0){
+    int val;
+    if(IsQuot){
+        val=InputRmWq(filepath,Copyfilepath);
+    }
+    else{
+        val=InputForRmWOq(filepath,Copyfilepath);
+    }
+    
+    if(val==0){
         return;
     }
     if(!strcmp("-f", Mode)){
-       CopystrF(size, Copyfilepath, Line, Place);
+        CopystrF(size,Copyfilepath ,Line, Place);
         
     }
     else{
@@ -985,7 +1012,7 @@ void CopystrF(int size,char* path,int Line,int Place){
     }
     for(int i=0;i<size;i++){
         CharContent=fgetc(OrgFile);
-        printf("%c",CharContent);
+      //  printf("%c",CharContent);
         fprintf(TempFile, "%c",CharContent);
 
        
@@ -1052,7 +1079,7 @@ void CutStrInp(char* command){
     char Mode[100];
     char SizeTag[MAX_COMMAND_SIZE];
     char filepath[MAX_PATH_SIZE];char Copyfilepath[MAX_PATH_SIZE];
-    int Place,Line,size;char sp;
+    int Place,Line,size;char sp;int IsQuot=0;
 
     //It must scan
     scanf("%s%c",FileTag,&sp);
@@ -1065,7 +1092,7 @@ void CutStrInp(char* command){
         scanf("%s", filepath + 1);
     }
     else
-    {
+    {   IsQuot=1;
         int i = 1;
         filepath[0]='"';
          while (1)
@@ -1095,12 +1122,19 @@ void CutStrInp(char* command){
         printf("There must be an error in the inputs\n");
         return;
     }
-    int val=IsValidPath(filepath, Copyfilepath);
+    int val;
+    if(IsQuot){
+        val=InputRmWq(filepath,Copyfilepath);
+    }
+    else{
+        val=InputForRmWOq(filepath,Copyfilepath);
+    }
+    
     if(val==0){
         return;
     }
     if(!strcmp("-f", Mode)){
-       CutstrF(size, Copyfilepath, Line, Place);
+        CutstrF(size,Copyfilepath ,Line, Place);
         
     }
     else{
@@ -1108,6 +1142,7 @@ void CutStrInp(char* command){
 
 
     }
+    
     
     
 }
@@ -1272,6 +1307,7 @@ void InpTree(char* command){
     }
     char path[]="root/";
     DirTree(path, 0,depth);
+    printf("----------------------\n");
 
     
 }
@@ -1312,6 +1348,10 @@ void DirTree(char *basePath, const int root,int depth)
             DirTree(path, root + 2,depth-1);
         }
     }
+    
+    
+  //  printf("----------------------");
+   
 
     closedir(dir);
 }
@@ -1462,29 +1502,33 @@ void AutoIndent(char* path){
 //            fprintf(TempFile, "%c",'\n');
 //            c='\n';
             if(prev_c==' '){
-                
+                for(int i=0;i<op;i++){
+                  fprintf(TempFile, "%s","    ");
+                }
                  fprintf(TempFile, "%c",c);
                  fprintf(TempFile, "%c",'\n');
-                 for(int i=0;i<op;i++){
-                   fprintf(TempFile, "%s","    ");
-                 }
+                 
                  
                 // c='\n';
             }
             else{
-                fprintf(TempFile, "%c",' ');
-                fprintf(TempFile, "%c",c);
+                
                 fprintf(TempFile, "%c",'\n');
                 for(int i=0;i<op;i++){
                   fprintf(TempFile, "%s","    ");
                 }
+                fprintf(TempFile, "%c",c);
+                
+//                for(int i=0;i<op;i++){
+//                  fprintf(TempFile, "%s","    ");
+//                }
             }
             op++;
 
 
         }
         else if(c=='}'){
-            fprintf(TempFile, "%c",'\n');
+           // fprintf(TempFile, "%c",'\n');
             for(int i=op-1;i>0;i--){
                 fprintf(TempFile, "%c",' ');
             }
@@ -1578,35 +1622,6 @@ void CompareInp(char* command){
     getchar();
     gets(filepath2);
     val2=IsValidPath(filepath2, Copyfilepath2);
-  
-
-//    c = getchar();
-//    if (c != '\"')
-//    {
-//        filepath2[0] = c;
-//        scanf("%s", filepath2 + 1);
-//    }
-//    else
-//    {
-//        int i = 1;
-//        filepath2[0]='"';
-//         while (1)
-//         {
-//             c = getchar();
-//             if (c == '\"' && filepath2[i - 1] != '\\'){
-//                 filepath1[i]=c;
-//                  break;
-//
-//             }
-//            filepath2[i] = c;
-//            i++;
-//        }
-//        filepath2[i] = 0;
-//    }
-  // printf("%c",330);
-   
-    //prinf("%s %s\n",Copyfilepath1,Copyfilepath2);
-  //  val2=IsValidPath(filepath2, Copyfilepath2);
     printf("%s %s\n",Copyfilepath1,Copyfilepath2);
     if (val1!=1||val2!=1){
         printf("%d %d\n",val1,val2);
@@ -1701,4 +1716,237 @@ void CompareFiles(char* path1,char* path2){
     
     
     return;
+}
+
+int InputForRm(char* path){
+    unsigned long LenghtOfPath=strlen(path);
+    int NumberOfSlashes=0;char* Address=malloc(MAX_PATH_SIZE*sizeof(char));
+    char* CopyOfAddress=malloc(MAX_PATH_SIZE*sizeof(char));
+    
+    
+    for(int i=0;i<LenghtOfPath;i++){
+        if(path[i]=='/'&&path[i-1]!='/')
+            NumberOfSlashes++;
+        
+        
+    }
+    
+    //   this block dosen't consider white spaces...
+    int index=0;int j=0;
+ 
+    for(int i=0;i<NumberOfSlashes-1;i++){
+        while(j<LenghtOfPath){
+            
+            if(path[j]=='/'){
+                if(j!=0){
+                    Address[index]='/';
+                    index++;
+                    j++;
+                    break;
+                    
+                }
+                else{
+                    j++;
+                }
+                
+            }
+            
+            else{
+                if(path[j]!=' '){
+                    Address[index]=path[j];
+                    index++;
+                    j++;
+                }
+                else{
+                    j++;
+                }
+                
+            }
+        }
+        
+        for(int t=0;t<strlen(Address)-1;t++){
+            CopyOfAddress[t]=Address[t];
+        }
+        //     printf("%s\n",CopyOfAddress);
+        
+        
+      int b=  CheckValidDir(CopyOfAddress);
+        if(b!=1){
+            
+            return -1;
+        }
+    }
+    index=0;
+    //    for(int i=j-1;i<LenghtOfPath;i++){
+    //        filename[index]=path[i+1];
+    //        index++;
+    //    }
+//
+//    for(int x=0;x<LenghtOfPath-1;x++){
+//        if(path[x+1]!=' '){
+//            NewPathForFile[index]=path[x+1];
+//            index++;
+//        }
+//    }
+    //    printf("%s",NewPathForFile);
+   
+        int a=  CheckValidFile(path+1);
+        return a;
+    //    for(int i=0;i<index;i++){
+    //        printf("%c",filename[i]);
+    //    }
+
+    
+    
+}
+int InputRmWq(char* path,char* Copyfilepath){
+    unsigned long LenghtOfPath=strlen(path);
+    int NumberOfSlashes=0;char* Address=malloc(MAX_PATH_SIZE*sizeof(char));
+    char* CopyOfAddress=malloc(MAX_PATH_SIZE*sizeof(char));
+    
+    
+    for(int i=0;i<LenghtOfPath;i++){
+        if(path[i]=='/'&&path[i-1]!='/')
+            NumberOfSlashes++;
+        
+        
+    }
+    int Count=0;int index=0;int j=0;
+//    printf("%d",LenghtOfPath);
+    for(int i=0;i<NumberOfSlashes-1;i++){
+        while(j<LenghtOfPath){
+            
+            if(path[j]=='/'){
+                if(j>1){
+                    Address[index]='/';
+                    index++;
+                    j++;
+                    Count++;
+                    break;
+
+                }
+                else{
+                    j++;
+                    Count++;
+                }
+
+            }
+
+            else{
+                if(path[j]!='"'){
+                    Address[index]=path[j];
+                    index++;
+                    j++;
+                }
+                else{
+                    j++;
+                }
+
+            }
+        }
+  //      printf("%s\n",Address);
+
+        for(int t=0;t<strlen(Address)-1;t++){
+            CopyOfAddress[t]=Address[t];
+        }
+    //       printf("%s\n",CopyOfAddress);
+        
+        
+        int b=  CheckValidDir(CopyOfAddress);
+          if(b!=1){
+              return -1;
+          }
+        
+    }
+    index=0;
+
+//    for(int x=2;x<LenghtOfPath-1;x++){
+//        if(path[x]!='"'){
+//            NewPathForFile[index]=path[x];
+//            index++;
+//        }
+//    }
+//    printf("%s",NewPathForFile);
+    path=path+1;
+    path=path+1;
+    path[strlen(path)-1]='\0';
+    
+   
+  int a=  CheckValidFile(path);
+    strcpy(Copyfilepath, path);
+    return a;
+   
+   
+}
+int InputForRmWOq(char* path,char* Copyfilepath){
+    unsigned long LenghtOfPath=strlen(path);
+    int NumberOfSlashes=0;char* Address=malloc(MAX_PATH_SIZE*sizeof(char));
+    char* CopyOfAddress=malloc(MAX_PATH_SIZE*sizeof(char));
+    
+    
+    for(int i=0;i<LenghtOfPath;i++){
+        if(path[i]=='/'&&path[i-1]!='/')
+            NumberOfSlashes++;
+        
+        
+    }
+    
+    //   this block dosen't consider white spaces...
+    int index=0;int j=0;
+ 
+    for(int i=0;i<NumberOfSlashes-1;i++){
+        while(j<LenghtOfPath){
+            
+            if(path[j]=='/'){
+                if(j!=0){
+                    Address[index]='/';
+                    index++;
+                    j++;
+                    break;
+                    
+                }
+                else{
+                    j++;
+                }
+                
+            }
+            
+            else{
+                if(path[j]!=' '){
+                    Address[index]=path[j];
+                    index++;
+                    j++;
+                }
+                else{
+                    j++;
+                }
+                
+            }
+        }
+        
+        for(int t=0;t<strlen(Address)-1;t++){
+            CopyOfAddress[t]=Address[t];
+        }
+     
+        
+        //    printf("%s\n",CopyOfAddress);
+        
+        
+      int b=  CheckValidDir(CopyOfAddress);
+        if(b!=1){
+            
+            return -1;
+        }
+    }
+    index=0;
+
+   
+    int a=  CheckValidFile(path+1);
+    strcpy(Copyfilepath, path+1);
+    
+        return a;
+   
+
+    
+    
 }
