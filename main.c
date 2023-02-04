@@ -30,6 +30,7 @@
 //declaring global variables
 char PrevChangedName[MAX_FILE_NAME];
 int IndexFor_FoundOut;
+int Line;int Place;
 //prototyping all the required functions
 int WhatIsTheCommand(char* command);
 
@@ -95,7 +96,7 @@ void grepInp(char* command);
 void ReplaceInp(char* command);
 void ReplaceStrALL(char* path,char* pattern,char* toRep);
 int ReplaceStrAT(char* path,char* pattern,char* toRep,int place);
-int PlaceandLine(int pos, int Line, int Place, char* path);
+void PlaceandLine(int pos, char* path);
 int FindForReplace(int indii[],int FoundAt[],char* path,char* str_to_search);
 
 
@@ -219,6 +220,9 @@ int WhatIsTheCommand(char* command){
     }
     else if(strcmp(command,"grep")==0){
         return 13;
+    }
+    else if(strcmp(command,"replace")==0){
+        return 14;
     }
    else{
        return -1;
@@ -2085,7 +2089,7 @@ void InputFind(char* command){
     char FileTag[MAX_COMMAND_SIZE];
     
     char filepath[MAX_PATH_SIZE];char Copyfilepath[MAX_PATH_SIZE];
-    char str1[MAX_STR_SIZE]; char str[MAX_STR_SIZE];
+    char str[MAX_STR_SIZE];
     int Place,Line;char sp;
     int all,byword,at,count;
     int filecmd,strcmd;int posi,SizeFound;
@@ -2645,7 +2649,9 @@ void ReplaceInp(char* command){
         
     }
     int val=IsValidPath(filepath, Copyfilepath,1);
-    strcpy(filepath+1, Copyfilepath);
+    strcpy(Copyfilepath, filepath+1);
+    
+   // printf("%s",filepath);
     
     if(val!=1){
         return;
@@ -2654,7 +2660,7 @@ void ReplaceInp(char* command){
         char undAdd[MAX_FILE_NAME];
         pathOfXfile(Copyfilepath, undAdd);
         MakeTheFile4Undo(Copyfilepath);
-        WriteToFile(Copyfilepath, undAdd);
+        WriteToFile(Copyfilepath, undAdd+1);
         ReplaceStrAT(Copyfilepath, str1, str2, 1);
         printf("Success!\n");
         return;
@@ -2663,7 +2669,7 @@ void ReplaceInp(char* command){
         char undAdd[MAX_FILE_NAME];
         pathOfXfile(Copyfilepath, undAdd);
         MakeTheFile4Undo(Copyfilepath);
-        WriteToFile(Copyfilepath, undAdd);
+        WriteToFile(Copyfilepath, undAdd+1);
         ReplaceStrAT(Copyfilepath, str1, str2, posi);
         printf("Success!\n");
         return;
@@ -2672,7 +2678,7 @@ void ReplaceInp(char* command){
         char undAdd[MAX_FILE_NAME];
         pathOfXfile(Copyfilepath, undAdd);
         MakeTheFile4Undo(Copyfilepath);
-        WriteToFile(Copyfilepath, undAdd);
+        WriteToFile(Copyfilepath, undAdd+1);
         ReplaceStrALL(Copyfilepath, str1, str2);
         return;
     }
@@ -2693,16 +2699,17 @@ int FindForReplace(int indii[],int FoundAt[],char* path,char* str_to_search){
     
     while((fgets(content, 2000, TheFile))!=NULL){
         SizeFound=FindandAddPlaces(content, str_to_search, FoundAt, PrevCount);
-        //        printf("%s\n",content);
-        //        printf("%d\t",SizeFound);
+        
+//            printf("%s\n",content);
+//                printf("%d\t",SizeFound);
         PrevCount+=strlen(content);
     }
     
-    
+    fclose(TheFile);
     return SizeFound;
 }
 
-int PlaceandLine(int pos, int Line, int Place, char* path)
+void PlaceandLine(int pos, char* path)
 {
     FILE* myfile = fopen(path, "r");
 
@@ -2714,6 +2721,7 @@ int PlaceandLine(int pos, int Line, int Place, char* path)
     while (count < pos)
     {
         c = fgetc(myfile);
+        printf("%c",c);
         if (c == '\n')
         {
             line_count++;
@@ -2723,35 +2731,15 @@ int PlaceandLine(int pos, int Line, int Place, char* path)
         char_count++;
     }
 
-    Line = line_count;
-    Line = char_count;
-   // printf("line:%d place:%d\n",Line,Place);
-    return 0;
+    Line  = line_count;
+    Place = char_count;
+    fclose(myfile);
+  // printf("line:%d place:%d\n",Line,Place);
+    int arr[2];
+    arr[0]=Line;arr[1]=Place;
+    return ;
 }
-//int ReplaceProcess(char* str_rep,char* pattern,char* OrgStr,char* finalStr){
-//    char* match;
-//    if((match=strstr(OrgStr, pattern))==NULL){
-//        strcpy(finalStr, OrgStr);
-//        return 0;
-//    }
-//    int rest=strlen(match);
-//    int pat_size=strlen(pattern);
-//    int org_size=strlen(OrgStr);
-//    int first_len=org_size-rest;
-//    for(int i=0;i<org_size;i++){
-//        if(i<first_len){
-//            finalStr[i]=OrgStr[i];
-//        }
-//        else if (i>=first_len&&i<pat_size+first_len){
-//            finalStr[i]=pattern[i-first_len];
-//        }
-//        else{
-//            finalStr[i]=OrgStr[i];
-//        }
-//    }
-//    printf("%s",finalStr);
-//    return 1;
-//}
+
 
 
 // path w/o / should be passed
@@ -2759,12 +2747,39 @@ int ReplaceStrAT(char* path,char* pattern,char* toRep,int place){
     int indii[10000];int FoundAt[10000];
  
     FindForReplace(indii, FoundAt, path, pattern);
-    if(indii[place-1]==-1){
+    if(FoundAt[place-1]==-1){
         printf("There was no appearances of the pattern in the file!\n");
           return 0;
     }
     int Size=strlen(pattern);
-    int Line=0;int Place=0;
+   
+  //  printf("is found:%d",indii[place-1]);
+  PlaceandLine(FoundAt[place-1], path);
+  //  printf("%d %d %d",Line,Place,Size);
+    RemovestrF(Size, path,Line+1,Place);
+    WriteWPos(Line, Place, path, toRep);
+    return 1;
+    
+}
+void ReplaceStrALL(char* path,char* pattern,char* toRep){
+    int indii[10000];int FoundAt[10000];
+   int lenoffound= FindForReplace(indii, FoundAt, path, pattern);
+    
+    
+    
+    
+   
+    
+    for(int i=1;i<=lenoffound;i++){
+      int flag=  ReplaceStrAT(path, pattern, toRep, indii[i-1]);
+        if(flag==0){
+            return;
+        }
+    }
+    printf("Succes!\n");
+    return;
+}
+
     PlaceandLine(indii[place-1], Line, Place, path);
     
     RemovestrF(Size, path,Line,Place);
