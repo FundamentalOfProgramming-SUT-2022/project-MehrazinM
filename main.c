@@ -1,9 +1,6 @@
-//
-//  main.c
-//  vim0.0.1
-//
-//  Created by Mehrazin on 10/29/1401 AP.
-//
+//Vim
+//v1.0.0
+//By:Mehrazin Malekghasemi std id:401100439
 
 
 
@@ -30,7 +27,7 @@
 //declaring global variables
 char PrevChangedName[MAX_FILE_NAME];
 int IndexFor_FoundOut;
-int Line;int Place;
+int LINE;int PLACE;
 //prototyping all the required functions
 int WhatIsTheCommand(char* command);
 
@@ -47,6 +44,10 @@ void cat(char* command);
 int IsValidPath(char* path,char* NewPathForFile,int ShowMode);
 int CheckValidFile(char* path,int ShowMode);
 int CheckValidDir(char* path,int ShowMode);
+
+int HowManyLines(char* path);
+void CharsOfEachLine(char* path,int place[]);
+int IsValidLineAndPlace(char* path,int place,int line);
 
 int Insertstr(char* command);
 void InputWordByWord(char* Path);
@@ -691,6 +692,10 @@ int Insertstr(char* command){
     if(val1==0||val2==0){
         return 0;
     }
+    int t=IsValidLineAndPlace(Copyfilepath, PlaceOfchar, line);
+    if(!t){
+        return 0;
+    }
 
     
     char undAdd[MAX_FILE_NAME];
@@ -904,9 +909,13 @@ void RemoveStrCommands(char* command){
         return;
     }
     
+    
   //  printf("%s",Copyfilepath);
     strcpy(Copyfilepath, filepath+1);
-    
+    int t=IsValidLineAndPlace(Copyfilepath, Place, Line);
+    if(!t){
+        return;
+    }
  //   printf("%s",Copyfilepath);
     char undAdd[MAX_FILE_NAME];
     pathOfXfile(Copyfilepath, undAdd);
@@ -926,18 +935,18 @@ void RemoveStrCommands(char* command){
 
     return;
 }
-void RemovestrF(int Size,char* path,int Line,int Place){
+void RemovestrF(int Size,char* path,int line,int place){
     //we assume the position is valid
     char ContentOfLine[MAX_STR_SIZE];char CharContent = '\0';
     int i=0;
     FILE* TempFile=fopen("root/temp.txt", "w");
     FILE* OrgFile=fopen(path,"r");
     
-    while(i<Line-1&&(fgets(ContentOfLine, 2000, OrgFile))!=NULL){
+    while(i<line-1&&(fgets(ContentOfLine, 2000, OrgFile))!=NULL){
         fprintf( TempFile,"%s", ContentOfLine);
         i++;
     }
-    for(int i=0;i<Place;i++){
+    for(int i=0;i<place;i++){
         CharContent=fgetc(OrgFile);
        // fprintf(TempFile, "%c",CharContent);
         fputc(CharContent, TempFile);
@@ -1070,6 +1079,9 @@ void CopyStrInp(char* command){
     }
   //  printf("%s copy:%s\n",filepath,Copyfilepath);
     strcpy(Copyfilepath, filepath+1);
+    int t=IsValidLineAndPlace(Copyfilepath, Place, Line);
+    if(!t)
+        return;
     if(!strcmp("-f", Mode)){
         CopystrF(size,Copyfilepath ,Line, Place);
         
@@ -1223,6 +1235,9 @@ void CutStrInp(char* command){
         return;
     }
     strcpy(Copyfilepath, filepath+1);
+    int t=IsValidLineAndPlace(Copyfilepath, Place, Line);
+    if(!t)
+        return;
     char undAdd[MAX_FILE_NAME];
     pathOfXfile(Copyfilepath, undAdd);
 
@@ -1364,6 +1379,9 @@ void PasteStr(char* command){
     if(val==0){
         return;
     }
+    int t=IsValidLineAndPlace(Copyfilepath, Place, Line);
+    if(!t)
+        return;
     char undAdd[MAX_FILE_NAME];
     pathOfXfile(Copyfilepath, undAdd);
 
@@ -2755,11 +2773,11 @@ void PlaceandLine(int pos, char* path)
         char_count++;
     }
 
-    Line  = line_count;
-    Place = char_count;
+    LINE  = line_count;
+    PLACE = char_count;
     fclose(myfile);
     int arr[2];
-    arr[0]=Line;arr[1]=Place;
+    arr[0]=LINE;arr[1]=PLACE;
     return ;
 }
 
@@ -2775,8 +2793,8 @@ int ReplaceStrAT(char* path,char* pattern,char* toRep,int place){
 
   PlaceandLine(FoundAt[place-1], path);
 
-    RemovestrF(Size, path,Line+1,Place);
-    WriteWPos(Line, Place, path, toRep);
+    RemovestrF(Size, path,LINE+1,PLACE);
+    WriteWPos(LINE, PLACE, path, toRep);
     return 1;
     
 }
@@ -2799,3 +2817,45 @@ void ReplaceStrALL(char* path,char* pattern,char* toRep){
     return;
 }
 
+int HowManyLines(char* path){
+    FILE* myfile=fopen(path,"r");
+    int lines=0;char c;
+    while((c=fgetc(myfile))!=EOF){
+        if(c=='\n'){
+            lines++;
+        }
+    }
+    fclose(myfile);
+    return lines;
+}
+void CharsOfEachLine(char* path,int places[]){
+    FILE* myfile=fopen(path,"r");
+    int i=0;
+    char content[MAX_STR_SIZE];
+    while((fgets(content, 2000, myfile))!=NULL){
+        places[i]=strlen(content);
+        i++;
+    }
+    fclose(myfile);
+    
+    
+}
+int IsValidLineAndPlace(char* path,int place,int line){
+    int NumberOfLines=HowManyLines(path);
+    if(NumberOfLines==0){
+        printf("File is empty!\n");
+        return 0;
+    }
+    if(line>NumberOfLines){
+        printf("There isn't %d lines in the file!!\n",line);
+        return 0;
+    }
+    int CharInEachLine[NumberOfLines];
+    CharsOfEachLine(path, CharInEachLine);
+    if(CharInEachLine[line-1]<=place){
+        printf("There isn't %d characters in line: %d !\n",place+1,line);
+        return 0;
+    }
+    
+    return 1;
+}
