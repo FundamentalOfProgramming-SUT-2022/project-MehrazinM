@@ -26,6 +26,7 @@
 #define CLIPBOARD "clipboard.txt"
 #define GrepFileName ".grepNames.txt"
 #define GrepContents ".grepText.txt"
+#define TEMPFILE ".temp.txt"
 //declaring global variables
 char PrevChangedName[MAX_FILE_NAME];
 int IndexFor_FoundOut;
@@ -69,8 +70,6 @@ void CutstrB(int Size,char* path,int Line,int Place);
 
 void PasteStr(char* command);
 
-//void treeInp(char* command);
-//void listFilesRecursively(char *basePath,int depth);
 
 void AutoIndentInp(char* command);
 void AutoIndent(char* path);
@@ -93,6 +92,10 @@ int FindandAddPlaces(char* str,char* pattern,int* found_at,int HowManyPrevs);
 void Grep(char* path,char* str);
 void grepInp(char* command);
 
+void ReplaceInp(char* command);
+int ReplaceProcess(char* str_rep,char* pattern,char* OrgStr,char* finalStr);
+void ReplaceStrAT(char* path,char* pattern,char* toRep,int place);
+void ReplaceStrALL(char* path,char* pattern,char* toRep);
 
 
 //void InputThePath(char* path);
@@ -159,6 +162,10 @@ int main(int argc, const char * argv[]) {
             case 13:
                 grepInp(command);
                 break;
+            case 14:
+                ReplaceInp(command);
+                break;
+            
             
                 
         }
@@ -2075,7 +2082,7 @@ void InputFind(char* command){
     IndexFor_FoundOut=0;
     char StrTag[MAX_COMMAND_SIZE];
     char FileTag[MAX_COMMAND_SIZE];
-    char opt[MAX_COMMAND_SIZE];
+    
     char filepath[MAX_PATH_SIZE];char Copyfilepath[MAX_PATH_SIZE];
     char str1[MAX_STR_SIZE]; char str[MAX_STR_SIZE];
     int Place,Line;char sp;
@@ -2560,4 +2567,201 @@ void Grep(char* path,char* str){
     
     return;
     
+}
+void ReplaceInp(char* command){
+    //replace –str1 <str> –str2 <str> –file <file name> [-at <num> | -all]
+    char TagForCommand[MAX_COMMAND_SIZE];char filepath[MAX_FILE_NAME];char Copyfilepath[MAX_FILE_NAME];
+    char str1[MAX_STR_SIZE],str2[MAX_STR_SIZE];
+    char fline[MAX_STR_SIZE];
+    int all,at,posi;char sp;
+    scanf("%s%c",TagForCommand,&sp);
+    if(strcmp("--str1", TagForCommand)){
+        gets(fline);
+        printf("You should have typed --str1 instead of~ %s ~,Try again!\n",TagForCommand);
+        return;
+    }
+    InputStr(str1);
+    scanf("%s%c",TagForCommand,&sp);
+    if(strcmp("--str2", TagForCommand)){
+        gets(fline);
+        printf("You should have typed --str2 instead of~ %s ~,Try again!\n",TagForCommand);
+        return;
+    }
+    InputStr(str2);
+    scanf("%s%c",TagForCommand,&sp);
+    if(strcmp("--file", TagForCommand)){
+        gets(fline);
+        printf("You should have typed --file instead of~ %s ~,Try again!\n",TagForCommand);
+        return;
+    }
+    char c;
+    c = getchar();
+    if (c != '\"')
+    {
+        filepath[0] = c;
+        scanf("%s", filepath + 1);
+    }
+    else
+    {
+        int i = 1;
+        filepath[0]='"';
+         while (1)
+         {
+             c = getchar();
+             if (c == '\"' && filepath[i - 1] != '\\'){
+                 filepath[i]=c;
+                  break;
+
+             }
+            filepath[i] = c;
+            i++;
+        }
+        filepath[i] = c;
+    }
+   
+    
+    if (getchar() != '\n')
+    {
+        char att[30];
+      
+        all = 0;at = 0;
+        do
+        {
+            scanf("%s", att);
+         //   printf("%s",att);
+            if (!strcmp(att, "-at"))
+            {
+                at = 1;
+                scanf("%d",&posi);
+            }
+           
+            else if (!strcmp(att, "-all"))
+            {
+                all = 1;
+            }
+           
+        } while (getchar() != '\n');
+        
+    }
+    int val=IsValidPath(filepath, Copyfilepath,1);
+    strcpy(filepath+1, Copyfilepath);
+    
+    if(val!=1){
+        return;
+    }
+    if(all==0&&at==0){
+        ReplaceStrAT(filepath, str1, str2, 1);
+        return;
+    }
+    else if(at=1&&all==0){
+        ReplaceStrAT(filepath, str1, str2, posi);
+        return;
+    }
+    else if (all==1&&at==0){
+        ReplaceStrALL(filepath, str1, str2);
+        return;
+    }
+    else{
+        printf("These options can't be operated at the same time!\n");
+        return;
+    }
+    
+    
+}
+int ReplaceProcess(char* str_rep,char* pattern,char* OrgStr,char* finalStr){
+    char* match;
+    if((match=strstr(OrgStr, pattern))==NULL){
+        strcpy(finalStr, OrgStr);
+        return 0;
+    }
+    int rest=strlen(match);
+    int pat_size=strlen(pattern);
+    int org_size=strlen(OrgStr);
+    int first_len=org_size-rest;
+    for(int i=0;i<org_size;i++){
+        if(i<first_len){
+            finalStr[i]=OrgStr[i];
+        }
+        else if (i>=first_len&&i<pat_size+first_len){
+            finalStr[i]=pattern[i-first_len];
+        }
+        else{
+            finalStr[i]=OrgStr[i];
+        }
+    }
+    printf("%s",finalStr);
+    return 1;
+}
+
+
+// path w/o / should be passed
+void ReplaceStrAT(char* path,char* pattern,char* toRep,int place){
+    char finalstr[MAX_STR_SIZE];
+    FILE* OrgFile=fopen(path, "r");
+    FILE* tmpFile=fopen(TEMPFILE, "w");
+    int flag=0;
+    char content[MAX_STR_SIZE];
+    while ((fgets(content, 2000, OrgFile))!=NULL) {
+        flag+=ReplaceProcess(toRep, pattern, content, finalstr);
+        if(flag<place){
+            fprintf(tmpFile, "%s",content);
+        }
+        else if(flag==place){
+            fprintf(tmpFile, "%s",finalstr);
+        }
+        else{
+            fprintf(tmpFile, "%s",content);
+        }
+    }
+    fclose(tmpFile);fclose(OrgFile);
+    if (!flag){
+        printf("There was no appearances of the pattern in the file!\n");
+        return;
+    }
+    if(flag<place){
+        printf("There isn't this many appearances of the pattern in the file!\n");
+        return;
+
+    }
+    char undAdd[MAX_FILE_NAME];
+    pathOfXfile(path, undAdd);
+
+    MakeTheFile4Undo(path);
+    WriteToFile(TEMPFILE, path);
+    remove(TEMPFILE);
+    printf("Succes!\n");
+    return;
+}
+void ReplaceStrALL(char* path,char* pattern,char* toRep){
+    char finalstr[MAX_STR_SIZE];
+    FILE* OrgFile=fopen(path, "r");
+    FILE* tmpFile=fopen(TEMPFILE, "w");
+    int flag=0;
+    char content[MAX_STR_SIZE];
+    while ((fgets(content, 2000, OrgFile))!=NULL) {
+        flag+=ReplaceProcess(toRep, pattern, content, finalstr);
+        if(flag==0){
+            fprintf(tmpFile, "%s",content);
+        }
+        
+        else{
+            fprintf(tmpFile, "%s",finalstr);
+        }
+    }
+    fclose(tmpFile);fclose(OrgFile);
+    if (!flag){
+        printf("There was no appearances of the pattern in the file!\n");
+        return;
+    }
+    char undAdd[MAX_FILE_NAME];
+    pathOfXfile(path, undAdd);
+
+    MakeTheFile4Undo(path);
+    //needs to be debugged
+    WriteToFile(path, undAdd+1);
+    
+    WriteToFile(TEMPFILE, path);
+    remove(TEMPFILE);
+    printf("Succes!\n");
+    return;
 }
