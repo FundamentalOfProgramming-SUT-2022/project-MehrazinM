@@ -74,6 +74,8 @@ void PasteStr(char* command);
 
 void AutoIndentInp(char* command);
 void AutoIndent(char* path);
+void PrepFileForIndent(char* path);
+void OmitEmptyLines(char* path);
 
 void InpTree(char* command);
 void DirTree(char *basePath, const int root,int depth);
@@ -1524,13 +1526,25 @@ void AutoIndentInp(char* command){
     MakeTheFile4Undo(Copyfilepath);
    // printf("%s",Copyfilepath);
     WriteToFile(Copyfilepath, undAdd+1);
+    PrepFileForIndent(Copyfilepath);
 
     AutoIndent(Copyfilepath);
     return;
 }
-//void PrepFileForIndent(char* path){
-//
-//}
+void PrepFileForIndent(char* path){
+    FILE* myfile=fopen(path, "r");
+    FILE* tmp=fopen(TEMPFILE, "w");
+    char content[MAX_STR_SIZE];char c;
+    while ((c=getc(myfile))!=EOF) {
+        if(c!='\n'){
+            fprintf(tmp, "%c",c);
+        }
+    }
+    fclose(tmp);fclose(myfile);
+    WriteToFile(TEMPFILE, path);
+   // remove(TEMPFILE);
+
+}
 void AutoIndent(char* path){
     //char ContentOfLine[MAX_STR_SIZE];
     FILE* TempFile=fopen("temp2.txt", "w");
@@ -1553,6 +1567,7 @@ void AutoIndent(char* path){
             if(prev_c==' '){
                 fprintf(TempFile, "%c",c);
                 fprintf(TempFile, "%c",'\n');
+                op++;
                 for(int i=0;i<op;i++){
                   fprintf(TempFile, "%s","    ");
                 }
@@ -1565,17 +1580,19 @@ void AutoIndent(char* path){
             else{
                 
                 fprintf(TempFile, "%c",'\n');
+                
                 for(int i=0;i<op;i++){
                   fprintf(TempFile, "%s","    ");
                 }
                 fprintf(TempFile, "%c",c);
                 
                 prev_c=' ';
+                op++;
 //                for(int i=0;i<op;i++){
 //                  fprintf(TempFile, "%s","    ");
 //                }
             }
-            op++;
+            
 
 
         }
@@ -1588,7 +1605,7 @@ void AutoIndent(char* path){
             }
             
             fprintf(TempFile, "%c",c);
-            
+            fprintf(TempFile, "%c",'\n');
             op--;
 
 
@@ -1646,8 +1663,27 @@ void AutoIndent(char* path){
 
     fclose(OrgFile);
     fclose(TempFile);
+    //delete empty lines
+    OmitEmptyLines(path);
     remove("temp2.txt");
 }
+void OmitEmptyLines(char* path){
+    FILE* myfile= fopen(path, "r");
+    FILE* tmp= fopen(TEMPFILE, "w");
+     char content[10000];
+     while((fgets(content, 2000, myfile))!=NULL){
+         if(content[0]=='\n'){
+             continue;
+         }
+         else{
+             fprintf(tmp, "%s",content);
+         }
+     }
+    fclose(myfile);fclose(tmp);
+    WriteToFile(TEMPFILE, path);
+    remove(TEMPFILE);
+}
+
 
 void CompareInp(char* command){
     char sp;int val1,val2;
@@ -2757,32 +2793,6 @@ int ReplaceStrAT(char* path,char* pattern,char* toRep,int place){
   PlaceandLine(FoundAt[place-1], path);
   //  printf("%d %d %d",Line,Place,Size);
     RemovestrF(Size, path,Line+1,Place);
-    WriteWPos(Line, Place, path, toRep);
-    return 1;
-    
-}
-void ReplaceStrALL(char* path,char* pattern,char* toRep){
-    int indii[10000];int FoundAt[10000];
-   int lenoffound= FindForReplace(indii, FoundAt, path, pattern);
-    
-    
-    
-    
-   
-    
-    for(int i=1;i<=lenoffound;i++){
-      int flag=  ReplaceStrAT(path, pattern, toRep, indii[i-1]);
-        if(flag==0){
-            return;
-        }
-    }
-    printf("Succes!\n");
-    return;
-}
-
-    PlaceandLine(indii[place-1], Line, Place, path);
-    
-    RemovestrF(Size, path,Line,Place);
     WriteWPos(Line, Place, path, toRep);
     return 1;
     
