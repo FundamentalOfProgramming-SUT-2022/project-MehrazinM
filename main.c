@@ -193,7 +193,7 @@ int WhatIsTheCommand(char* command){
     else if(strcmp(command, "insertstr")==0){
         return 3;
     }
-    else if(strcmp(command, "remove")==0){
+    else if(strcmp(command, "removestr")==0){
         return 4;
     }
     else if(strcmp(command,"copystr")==0){
@@ -435,6 +435,7 @@ void cat(char* command){
     char path[MAX_PATH_SIZE];char Newpath[MAX_PATH_SIZE];
     gets(path);
     int val=IsValidPath(path, Newpath, 1);
+   // printf("%s",Newpath);
     if(val==1){
         ReadFromFile(Newpath);
     }
@@ -622,18 +623,7 @@ int CheckValidDir(char* path,int ShowMode){
         return -1;
     }
 }
-//void RemoveStr(char* command,int val){
-//    char TagForCommand[1000];
-//
-//
-//    scanf("%s",TagForCommand);
-//    if(strcmp(TagForCommand,"--file")){
-//        printf("Undefined keyword!\n");
-//        val=0;
-//        return;
-//    }
-//
-//}
+
 int Insertstr(char* command){
 
     char TagForCommand[MAX_COMMAND_SIZE];char TagForCommand1[MAX_COMMAND_SIZE];char TagForCommand2[MAX_COMMAND_SIZE];
@@ -805,15 +795,12 @@ void WriteWPos(int line,int place,char* path,char* str){
     
     FILE* OrgFile=fopen(path,"r");
     
-    
-    
-    
     FILE* TempFile=fopen("root/temp.txt", "w");int i=0;
     
    
     char ContentOfLine[MAX_STR_SIZE];char CharContent = '\0';
 
-        while((fgets(ContentOfLine, 2000, OrgFile))!=NULL&&i<line-1){
+        while(i<line-1&&(fgets(ContentOfLine, 2000, OrgFile))!=NULL){
             fprintf( TempFile,"%s", ContentOfLine);
             i++;
         }
@@ -860,10 +847,10 @@ void RemoveStrCommands(char* command){
     char filepath[MAX_PATH_SIZE];char Copyfilepath[MAX_PATH_SIZE];
     int Place,Line,size;char sp;
     int IsQuot=0;
-
+   
     //It must scan
     scanf("%s%c",FileTag,&sp);
-
+  //  printf("%s",FileTag);
     char c;
     c = getchar();
     if (c != '\"')
@@ -920,7 +907,7 @@ void RemoveStrCommands(char* command){
   //  printf("%s",Copyfilepath);
     strcpy(Copyfilepath, filepath+1);
     
-    printf("%s",Copyfilepath);
+ //   printf("%s",Copyfilepath);
     char undAdd[MAX_FILE_NAME];
     pathOfXfile(Copyfilepath, undAdd);
 
@@ -946,13 +933,14 @@ void RemovestrF(int Size,char* path,int Line,int Place){
     FILE* TempFile=fopen("root/temp.txt", "w");
     FILE* OrgFile=fopen(path,"r");
     
-    while((fgets(ContentOfLine, 2000, OrgFile))!=NULL&&i<Line-1){
+    while(i<Line-1&&(fgets(ContentOfLine, 2000, OrgFile))!=NULL){
         fprintf( TempFile,"%s", ContentOfLine);
         i++;
     }
     for(int i=0;i<Place;i++){
         CharContent=fgetc(OrgFile);
-        fprintf(TempFile, "%c",CharContent);
+       // fprintf(TempFile, "%c",CharContent);
+        fputc(CharContent, TempFile);
 
     }
     for(int i=0;i<Size;i++){
@@ -1080,6 +1068,8 @@ void CopyStrInp(char* command){
     if(val==0){
         return;
     }
+  //  printf("%s copy:%s\n",filepath,Copyfilepath);
+    strcpy(Copyfilepath, filepath+1);
     if(!strcmp("-f", Mode)){
         CopystrF(size,Copyfilepath ,Line, Place);
         
@@ -1097,7 +1087,7 @@ void CopystrF(int size,char* path,int Line,int Place){
     FILE* OrgFile=fopen(path,"r");
     char ContentOfLine[MAX_STR_SIZE];char CharContent = '\0';
     int i=0;
-    while((fgets(ContentOfLine, 2000, OrgFile))!=NULL&&i<Line-1){
+    while(i<Line-1&&(fgets(ContentOfLine, 2000, OrgFile))!=NULL){
       //  fprintf( TempFile,"%s", ContentOfLine);
         i++;
     }
@@ -1258,7 +1248,7 @@ void CutstrF(int size,char* path,int Line,int Place){
     FILE* OrgFile=fopen(path,"r");
     char ContentOfLine[MAX_STR_SIZE];char CharContent;
     int i=0;
-    while((fgets(ContentOfLine, 2000, OrgFile))!=NULL&&i<Line-1){
+    while(i<Line-1&&(fgets(ContentOfLine, 2000, OrgFile))!=NULL){
       //  fprintf( TempFile,"%s", ContentOfLine);
         i++;
     }
@@ -1330,7 +1320,7 @@ void PasteStr(char* command){
     char FileTag[MAX_COMMAND_SIZE];
     char PosTag[MAX_COMMAND_SIZE];
    
-   
+    
     char filepath[MAX_PATH_SIZE];char Copyfilepath[MAX_PATH_SIZE];
     int Place,Line;char sp;
 
@@ -1383,36 +1373,53 @@ void PasteStr(char* command){
     
     
 
-    FILE *clipboard = fopen(CLIPBOARD, "r");
+    FILE* clipboard = fopen(CLIPBOARD, "r");
        if (clipboard == NULL)
        {
           printf("Nothing to Paste\n");
+           
+           fclose(clipboard);
            return ;
        }
-    char content[2000];
-    while (1)
-       {
-           if (fgets(content, 2000, clipboard) == NULL)
-               break;
-//           if (WriteWPos(Line, Place, Copyfilepath, content) == -1)
-//           {
-//               printf("error\n");
-//               fclose(clipboard);
-//               return ;
-//           }
-           WriteWPos(Line, Place, Copyfilepath, content);
-           if (command[strlen(content) - 1] == '\n')
-           {
-               Line++;
-               Place = 0;
-           }
-           else
-           {
-               Place += strlen(content);
-           }
-       }
+  
+    FILE* OrgFile=fopen(Copyfilepath,"r");
+    
+    FILE* TempFile=fopen(TEMPFILE, "w");int i=0;
+    char ContentOfLine[MAX_STR_SIZE];char CharContent;
 
-       fclose(clipboard);
+    while(i<Line-1&&(fgets(ContentOfLine, 2000, OrgFile))!=NULL){
+        fprintf( TempFile,"%s", ContentOfLine);
+        i++;
+    }
+    for(int i=0;i<Place;i++){
+        CharContent=fgetc(OrgFile);
+       // ContentOfLine[i]=CharContent;
+        fprintf(TempFile, "%c",CharContent);
+    }
+    while((fgets(ContentOfLine, 2000, clipboard))!=NULL){
+        fprintf( TempFile,"%s", ContentOfLine);
+        
+    }
+    while (fgets(ContentOfLine, 2000, OrgFile) != NULL)
+     {
+         fprintf( TempFile,"%s",ContentOfLine);
+     }
+    fclose(OrgFile);
+    fclose(TempFile);
+    fclose(clipboard);
+    OrgFile=fopen(Copyfilepath, "w");
+    TempFile=fopen(TEMPFILE, "r");
+    while((fgets(ContentOfLine, 2000, TempFile))!=NULL){
+        fprintf( OrgFile,"%s",ContentOfLine);
+    }
+    fclose(OrgFile);
+    fclose(TempFile);
+    remove(TEMPFILE);
+
+    
+
+    
+      
 
 }
 void InpTree(char* command){
@@ -1714,7 +1721,7 @@ void CompareInp(char* command){
                   break;
 
              }
-             printf("%c",c);
+          //   printf("%c",c);
             filepath1[i] = c;
             i++;
         }
@@ -1725,7 +1732,7 @@ void CompareInp(char* command){
     getchar();
     gets(filepath2);
     val2=IsValidPath(filepath2, Copyfilepath2,1);
-    printf("%s %s\n",Copyfilepath1,Copyfilepath2);
+   // printf("%s %s\n",Copyfilepath1,Copyfilepath2);
     if (val1!=1||val2!=1){
         printf("%d %d\n",val1,val2);
 
@@ -2374,8 +2381,7 @@ int FindandAddPlaces(char* str,char* pattern,int* found_at,int HowManyPrevs){
         arr=str+k/sizeof(char);
         str=a;
         str=str+strlen(pattern);
-        //        printf("%d  \n",k-c);
-        //        printf("%s is str\n",str);
+     
     }
     return IndexFor_FoundOut;
 }
@@ -2389,7 +2395,7 @@ void grepInp(char* command){
         InputStr(str);
         sp=getchar();
         scanf("%s%c",TagForCommand,&sp);
-       // printf("sp is:%c",sp);
+
         if(strcmp(TagForCommand, "--files")){
             gets(fline);
             return;
@@ -2399,8 +2405,7 @@ void grepInp(char* command){
         FILE* contents=fopen(GrepContents, "w");
         fclose(contents);
         while(1){
-        //filepath=frepath;
-           
+     
         c = getchar();
         if (c != '\"')
         {
@@ -2424,8 +2429,7 @@ void grepInp(char* command){
             }
             filepath[i] = c;
         }
-          //  printf("%s\n",filepath);
-            //grep action
+    
             c=getchar();
             Grep(filepath,str);
             if(c=='\n')
@@ -2438,7 +2442,7 @@ void grepInp(char* command){
         fclose(grep1);
     }
     else if(!strcmp("-l", TagForCommand)){
-        //option line /get --str and the string
+
         scanf("%s%c",TagForCommand,&sp);
         if(strcmp("--str",TagForCommand)){
             gets(fline);
@@ -2448,7 +2452,7 @@ void grepInp(char* command){
         InputStr(str);
         sp=getchar();
         scanf("%s%c",TagForCommand,&sp);
-      //  printf("sp is:%c",sp);
+
         if(strcmp(TagForCommand, "--files")){
             gets(fline);
             return;
@@ -2458,8 +2462,7 @@ void grepInp(char* command){
         FILE* contents=fopen(GrepContents, "w");
         fclose(contents);
         while(1){
-        //filepath=frepath;
-           
+        
         c = getchar();
         if (c != '\"')
         {
@@ -2483,8 +2486,7 @@ void grepInp(char* command){
             }
             filepath[i] = c;
         }
-          //  printf("%s\n",filepath);
-            //grep action
+
             c=getchar();
             Grep(filepath,str);
             if(c=='\n')
@@ -2495,7 +2497,7 @@ void grepInp(char* command){
             printf("%s",fline);
         }
         fclose(grep1);
-       // printf("%d\n",i);
+ 
     }
     else if(!strcmp("-c", TagForCommand)){
         scanf("%s%c",TagForCommand,&sp);
@@ -2507,7 +2509,6 @@ void grepInp(char* command){
         InputStr(str);
         sp=getchar();
         scanf("%s%c",TagForCommand,&sp);
-//        printf("sp is:%c",sp);
         if(strcmp(TagForCommand, "--files")){
             gets(fline);
             return;
@@ -2517,8 +2518,6 @@ void grepInp(char* command){
         FILE* contents=fopen(GrepContents, "w");
         fclose(contents);
         while(1){
-        //filepath=frepath;
-           
         c = getchar();
         if (c != '\"')
         {
@@ -2542,8 +2541,6 @@ void grepInp(char* command){
             }
             filepath[i] = c;
         }
-          //  printf("%s\n",filepath);
-            //grep action
             c=getchar();
             Grep(filepath,str);
             if(c=='\n')
@@ -2594,8 +2591,7 @@ void Grep(char* path,char* str){
             fprintf(Res, "%s"," : ");
             fprintf(Res, "%s",content);
             fprintf(Res, "%s","\n");
-//            fprintf(names, "%s",path);
-//            fprintf(Res, "%s","\n");
+
         }
     }
     if(flag==1){
@@ -2669,7 +2665,6 @@ void ReplaceInp(char* command){
         do
         {
             scanf("%s", att);
-         //   printf("%s",att);
             if (!strcmp(att, "-at"))
             {
                 at = 1;
@@ -2687,7 +2682,6 @@ void ReplaceInp(char* command){
     int val=IsValidPath(filepath, Copyfilepath,1);
     strcpy(Copyfilepath, filepath+1);
     
-   // printf("%s",filepath);
     
     if(val!=1){
         return;
@@ -2728,16 +2722,11 @@ void ReplaceInp(char* command){
 int FindForReplace(int indii[],int FoundAt[],char* path,char* str_to_search){
     
    int SizeFound;
-   // size=IndexOfWords(path, indii);
-  //  printf("%d\t",size);
     FILE* TheFile=fopen(path, "r");
     char content[MAX_STR_SIZE];int PrevCount=0;
     
     while((fgets(content, 2000, TheFile))!=NULL){
         SizeFound=FindandAddPlaces(content, str_to_search, FoundAt, PrevCount);
-        
-//            printf("%s\n",content);
-//                printf("%d\t",SizeFound);
         PrevCount+=strlen(content);
     }
     
@@ -2757,7 +2746,6 @@ void PlaceandLine(int pos, char* path)
     while (count < pos)
     {
         c = fgetc(myfile);
-        printf("%c",c);
         if (c == '\n')
         {
             line_count++;
@@ -2770,15 +2758,11 @@ void PlaceandLine(int pos, char* path)
     Line  = line_count;
     Place = char_count;
     fclose(myfile);
-  // printf("line:%d place:%d\n",Line,Place);
     int arr[2];
     arr[0]=Line;arr[1]=Place;
     return ;
 }
 
-
-
-// path w/o / should be passed
 int ReplaceStrAT(char* path,char* pattern,char* toRep,int place){
     int indii[10000];int FoundAt[10000];
  
@@ -2788,10 +2772,9 @@ int ReplaceStrAT(char* path,char* pattern,char* toRep,int place){
           return 0;
     }
     int Size=strlen(pattern);
-   
-  //  printf("is found:%d",indii[place-1]);
+
   PlaceandLine(FoundAt[place-1], path);
-  //  printf("%d %d %d",Line,Place,Size);
+
     RemovestrF(Size, path,Line+1,Place);
     WriteWPos(Line, Place, path, toRep);
     return 1;
