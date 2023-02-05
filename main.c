@@ -3,6 +3,7 @@
 //By:Mehrazin Malekghasemi std id:401100439
 
 
+
 //
 //  main.c
 //  vim0.0.1
@@ -100,6 +101,7 @@ void pathOfXfile(char* path,char* Xfilepath);
 void InputFind(char* command);
 int IndexOfWords(char* path,int* indii);
 int FindandAddPlaces(char* str,char* pattern,int* found_at,int HowManyPrevs);
+int IsWildCard(char* str,int indexOfStars[]);
 
 void Grep(char* path,char* str);
 void grepInp(char* command);
@@ -2232,31 +2234,82 @@ void InputFind(char* command){
     if(val!=1){
         return;
     }
+    
     int indii[100000];
     int size=0;
     size=IndexOfWords(Copyfilepath, indii);
-  //  printf("%d\t",size);
+    int indexOfStars[1000];
+ 
     FILE* TheFile=fopen(Copyfilepath, "r");
     char content[MAX_STR_SIZE];int PrevCount=0;
-    int FoundAt[10000] ;
-//    for(int i=0;i<size;i++){
-//        printf("%d\t",indii[i]);
-//    }
-    //this func is not working
-    while((fgets(content, 2000, TheFile))!=NULL){
-        SizeFound=FindandAddPlaces(content, str, FoundAt, PrevCount);
-//        printf("%s\n",content);
-//        printf("%d\t",SizeFound);
-        PrevCount+=strlen(content);
-//            for(int i=0;i<SizeFound;i++){
-//                printf("%d found at: %d\n",i,FoundAt[i]);
-//            }
-        
+    int FoundAt[10000] ; int lit_FoundAt[10000];
+    int wc=IsWildCard(str, indexOfStars);
+    if(wc>1){
+        printf("Unsuppoerted format for the string\n");
     }
-//    for(int i=0;i<SizeFound;i++){
-//        printf("%d\t",indii[i]);
-//    }
-  //  printf("SizeFound:%d\n",SizeFound);
+    else if(wc==1){
+        char* pat;
+        if(indexOfStars[0]==0){
+           
+            pat=str+1;
+            
+            while((fgets(content, 2000, TheFile))!=NULL){
+                SizeFound=FindandAddPlaces(content, pat, FoundAt, PrevCount);
+
+                PrevCount+=strlen(content);
+
+            }
+           int a=0;
+            for(int i=0;i<SizeFound;i++){
+                for(int j=0;j<size;j++){
+                    if(FoundAt[i]>indii[j]&&FoundAt[i]<indii[j+1]){
+                        if(content[i-1]!=' '){
+                            lit_FoundAt[a]=FoundAt[j];
+                            a++;
+                        }
+                    }
+                }
+            }
+            
+            
+        }
+        else{
+            for(int i=0;i<strlen(str)-1;i++){
+                      *(pat+i)=str[i];
+                }
+            while((fgets(content, 2000, TheFile))!=NULL){
+                SizeFound=FindandAddPlaces(content, pat, FoundAt, PrevCount);
+
+                PrevCount+=strlen(content);
+
+            }
+            int a=0;
+             for(int i=0;i<SizeFound;i++){
+                 for(int j=0;j<size;j++){
+                     if(FoundAt[i]>=indii[j]&&FoundAt[i]<indii[j+1]){
+                         if(content[i+1+strlen(pat)]!=' '){
+                             lit_FoundAt[a]=FoundAt[j];
+                             a++;
+                         }
+                     }
+                 }
+             }
+            
+        }
+        return;
+    }
+
+    else{
+        while((fgets(content, 2000, TheFile))!=NULL){
+            SizeFound=FindandAddPlaces(content, str, FoundAt, PrevCount);
+            
+            PrevCount+=strlen(content);
+            
+            
+        }
+    }
+    fclose(TheFile);
+
     if (!SizeFound){
         FoundAt[0]=-1;
     }
@@ -2346,13 +2399,33 @@ void InputFind(char* command){
         return;
     }
     else{
-        printf("sorry,this options can't be performed at a mean time!\n");
+        printf("sorry,these options can't be performed at a mean time!\n");
         return;
     }
         
         return;
     }
-
+int IsWildCard(char* str,int indexOfStars[]){
+    int a=0;
+    for(int i=0;i<strlen(indexOfStars);i++){
+        if(str[i]=='*'&&str[i-1]!='\\'){
+            indexOfStars[a]=i;
+            a++;
+        }
+    }
+    return a;
+}
+//void SimpleWildcard(char* str,int a,char* pattern){
+//
+//    if(a==0){
+//        pattern=str+1;
+//    }
+//    else{
+//        for(int i=0;i<strlen(str)-1;i++){
+//            pattern[i]=str[i];
+//        }
+//    }
+//}
 
 
 
